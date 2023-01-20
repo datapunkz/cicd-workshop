@@ -71,8 +71,8 @@ def find_or_create_context_by_name(context_name):   # context name - CICD_WORKSH
 
 # Add Env vars to context
 print(add_circle_token_to_context_with_name('SNYK', 'SNYK_TOKEN', SNYK_TOKEN))
-print(add_circle_token_to_context_with_name('DOCKER_LOGIN', 'DOCKER_LOGIN', DOCKER_LOGIN))
-print(add_circle_token_to_context_with_name('DOCKER_TOKEN', 'DOCKER_PASSWORD', DOCKER_TOKEN))
+print(add_circle_token_to_context_with_name('DOCKER', 'DOCKER_LOGIN', DOCKER_LOGIN))
+print(add_circle_token_to_context_with_name('DOCKER', 'DOCKER_PASSWORD', DOCKER_TOKEN))
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_KEY', TF_CLOUD_KEY))
 print(add_circle_token_to_context_with_name('DIGITAL_OCEAN', 'DIGITALOCEAN_TOKEN', DIGITALOCEAN_TOKEN))
 

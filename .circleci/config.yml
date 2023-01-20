@@ -6,11 +6,6 @@ orbs:
   snyk: snyk/snyk@1.2.3
   terraform: circleci/terraform@3.0.0
 
-parameters:
-  scheduled:
-    type: boolean
-    default: false
-
 commands:
   install_doctl:
     parameters:
@@ -28,35 +23,20 @@ commands:
 
 jobs:
   build_and_test:
-    parameters:
-      node_version:
-        type: string
-        default: 16.16.0
     docker:
       - image: cimg/node:16.16.0
-    parallelism: 4
     steps:
       - checkout
       - node/install-packages
       - run:
           name: Run tests
-          command: |
-            echo $(circleci tests glob "test/**/*.test.js")
-            circleci tests glob "test/**/*.test.js" | circleci tests split |
-            xargs npm run test-ci
+          command: npm run test-ci
       - run:
           name: Copy tests results for storing
           command: |
             mkdir test-results
             cp test-results.xml test-results/
           when: always
-      - run:
-          name: Process test report
-          command: |
-            # Convert absolute paths to relative to support splitting tests by timing
-            if [ -e test-results.xml ]; then
-              sed -i "s|`pwd`/||g" test-results.xml
-            fi
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -106,7 +86,7 @@ jobs:
       - run:
           name: Create K8s Cluster on DigitalOcean
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITALOCEAN_TOKEN | jq -r '.[0] | .slug')"
 
@@ -135,7 +115,7 @@ jobs:
       - run:
           name: Deploy Application to K8s on DigitalOcean
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"
             doctl auth init -t $DIGITALOCEAN_TOKEN
@@ -188,7 +168,7 @@ jobs:
       - run:
           name: Destroy App Deployment
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"          
             doctl auth init -t $DIGITALOCEAN_TOKEN
@@ -205,7 +185,7 @@ jobs:
       - run:
           name: Destroy K8s Cluster
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITALOCEAN_TOKEN | jq -r '.[0] | .slug')"
 
@@ -214,37 +194,31 @@ jobs:
               -var cluster_name=$CLUSTER_NAME \
               -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
               -auto-approve
-      
+
 workflows:
   test_scan_deploy:
-      when:  
-        not: << pipeline.parameters.scheduled >>
       jobs:
-        - build_and_test:
-            matrix:
-              parameters:
-                node_version: ["16.16.0", "14.19.0", "17.6.0" ]
+        - build_and_test
         - dependency_vulnerability_scan:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_SNYK
         - build_docker_image:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
         - create_do_k8s_cluster:
             requires:
               - dependency_vulnerability_scan
               - build_docker_image
               - build_and_test
             context:
-              - cicd-workshop
-            filters:
-              branches:
-                only: main
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM
         - deploy_to_k8s:
             requires:
               - create_do_k8s_cluster
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM
         - smoketest_k8s_deployment:
             requires:
               - deploy_to_k8s
@@ -256,18 +230,7 @@ workflows:
             requires:
               - approve_destroy
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM
 
-  nightly-build:
-    when: << pipeline.parameters.scheduled >>
-    jobs:
-      - build_and_test:
-          matrix:
-            parameters:
-              node_version: ["16.16.0", "14.19.0", "17.6.0" ]
-      - dependency_vulnerability_scan:
-          context:   
-            - cicd-workshop
-      - build_docker_image:
-          context:
-            - cicd-workshop
+# VS Code Extension Version: 1.5.1
