@@ -16,6 +16,8 @@ tasks:
   - name: Prepare credentials file
     init: |
       cp scripts/util/credentials.sample.toml credentials.toml
+  - name: Install Python Dependencies
+    init: pip install -r requirements.txt      
   - name: Check if SSH env vars exist and set them
     command: |
       echo "check for ssh key env var"
