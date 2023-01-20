@@ -220,6 +220,7 @@ workflows:
 
         - deploy_to_k8s:
             requires:
+              - build_docker_image
               - create_do_k8s_cluster
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
