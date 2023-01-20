@@ -206,13 +206,17 @@ workflows:
             context:
               - CICD_WORKSHOP_DOCKER
         - create_do_k8s_cluster:
-            requires:
-              - dependency_vulnerability_scan
-              - build_docker_image
-              - build_and_test
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
-              - CICD_WORKSHOP_TERRAFORM
+              - CICD_WORKSHOP_TERRAFORM              
+        # - create_do_k8s_cluster:
+        #     requires:
+        #       - dependency_vulnerability_scan
+        #       - build_docker_image
+        #       - build_and_test
+        #     context:
+        #       - CICD_WORKSHOP_DIGITAL_OCEAN
+        #       - CICD_WORKSHOP_TERRAFORM
         - deploy_to_k8s:
             requires:
               - create_do_k8s_cluster
