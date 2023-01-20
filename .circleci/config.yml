@@ -1,16 +1,16 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.0.2
-  docker: circleci/docker@2.1.1
-  snyk: snyk/snyk@1.2.3
-  terraform: circleci/terraform@3.0.0
+  node: circleci/node@5.1.0
+  docker: circleci/docker@2.2.0
+  snyk: snyk/snyk@1.4.0
+  terraform: circleci/terraform@3.2.0
 
 commands:
   install_doctl:
     parameters:
       version:
-        default: "1.79.0"
+        default: "1.92.0"
         type: string
     steps:
       - run:
@@ -72,8 +72,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - install_doctl:
-          version: "1.78.0"
+      - install_doctl
       - run:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
@@ -101,8 +100,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - install_doctl:
-          version: "1.78.0"
+      - install_doctl
       - run:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
@@ -154,8 +152,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - install_doctl:
-          version: "1.78.0"
+      - install_doctl
       - run:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc && cat $HOME/.terraformrc
@@ -223,6 +220,7 @@ workflows:
               - build_docker_image
               - create_do_k8s_cluster
             context:
+              - CICD_WORKSHOP_DOCKER
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
         - smoketest_k8s_deployment:
@@ -236,6 +234,7 @@ workflows:
             requires:
               - approve_destroy
             context:
+              - CICD_WORKSHOP_DOCKER
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
 
