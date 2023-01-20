@@ -208,7 +208,7 @@ workflows:
         - create_do_k8s_cluster:
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
-              - CICD_WORKSHOP_TERRAFORM              
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
         # - create_do_k8s_cluster:
         #     requires:
         #       - dependency_vulnerability_scan
@@ -216,13 +216,14 @@ workflows:
         #       - build_and_test
         #     context:
         #       - CICD_WORKSHOP_DIGITAL_OCEAN
-        #       - CICD_WORKSHOP_TERRAFORM
+        #       - CICD_WORKSHOP_TERRAFORM_CLOUD
+
         - deploy_to_k8s:
             requires:
               - create_do_k8s_cluster
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
-              - CICD_WORKSHOP_TERRAFORM
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
         - smoketest_k8s_deployment:
             requires:
               - deploy_to_k8s
@@ -235,6 +236,6 @@ workflows:
               - approve_destroy
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
-              - CICD_WORKSHOP_TERRAFORM
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
 
 # VS Code Extension Version: 1.5.1
