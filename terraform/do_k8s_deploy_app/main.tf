@@ -18,7 +18,7 @@ terraform {
   backend "remote" {
     organization = ""
     workspaces {
-      name = "deploy-cicd-workshop-do"
+      name = "deploy-iac-do"
     }
   }
 }

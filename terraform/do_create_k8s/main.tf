@@ -16,9 +16,9 @@ terraform {
   }
 
   backend "remote" {
-    organization = "zmarkan-demos-2"
+    organization = "datapunks"
     workspaces {
-      name = "cicd-workshop-do"
+      name = "iac_do"
     }
   }
 }
