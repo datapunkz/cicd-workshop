@@ -18,7 +18,7 @@ terraform {
   backend "remote" {
     organization = "circleci-demo"
     workspaces {
-      name = "circleci-workshop-deploy"
+      name = "circleci-workshop-deployment"
     }
   }
 }

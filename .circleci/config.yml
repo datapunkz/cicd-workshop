@@ -248,12 +248,12 @@ workflows:
         - create_do_k8s_cluster:
             requires:
               - provision_terraform_cloud
+              - build_docker_image
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
         - deploy_to_k8s:
             requires:
-              - build_docker_image
               - create_do_k8s_cluster
             context:
               - CICD_WORKSHOP_DOCKER
