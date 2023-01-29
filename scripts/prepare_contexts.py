@@ -30,7 +30,7 @@ TF_CLOUD_ORG_EMAIL = strip_spaces(creds.get('tf_cloud_org_email'))
 TF_CLOUD_ORG_NAME = strip_spaces(creds.get('tf_cloud_org_name'))
 TF_CLOUD_ORGANIZATION = f'{TF_CLOUD_ORG_NAME}-{CIRCLECI_VCS_USER}'   # Create a unique Org Name for TF Cloud
 TF_CLOUD_WORKSPACE = strip_spaces(creds.get('tf_cloud_workspace'))
-DIGITALOCEAN_TOKEN = strip_spaces(creds.get('digitalocean_token'))
+DIGITAL_OCEAN_TOKEN = strip_spaces(creds.get('digital_ocean_token'))
 
 REQUEST_HEADER = {
     'content-type': "application/json",
@@ -132,7 +132,7 @@ def find_or_create_context_by_name(context_name):   # context name - CICD_WORKSH
 # Add Env vars to context
 print(add_circle_token_to_context_with_name('SNYK', 'SNYK_TOKEN', SNYK_TOKEN))
 print(add_circle_token_to_context_with_name('DOCKER', 'DOCKER_LOGIN', DOCKER_LOGIN))
-print(add_circle_token_to_context_with_name('DIGITAL_OCEAN', 'DIGITALOCEAN_TOKEN', DIGITALOCEAN_TOKEN))
+print(add_circle_token_to_context_with_name('DIGITAL_OCEAN', 'DIGITAL_OCEAN_TOKEN', DIGITAL_OCEAN_TOKEN))
 print(add_circle_token_to_context_with_name('DOCKER', 'DOCKER_PASSWORD', DOCKER_TOKEN))
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_TOKEN', TF_CLOUD_TOKEN))
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_ORG_EMAIL', TF_CLOUD_ORG_EMAIL))

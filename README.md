@@ -40,7 +40,7 @@ If you don't do this, you'll have a bad time.
 - Create an account with DigitalOcean - https://cloud.digitalocean.com/ We will use DigitalOcean to deploy our application to. 
 - Go to API (left)
 - Generate New Token with read and write access
-- copy the token string to `credentials.toml` - `digitalocean_token`
+- copy the token string to `credentials.toml` - `digital_ocean_token`
  
 #### Terraform Cloud
 
@@ -404,7 +404,7 @@ workflows:
 We often use CI/CD pipelines to create our infrastructure, not just run our applications. In the following steps we will be doing just that.
 
 First make sure you have all the credentials created and set in your `cicd-workshop` context:
-- DIGITALOCEAN_TOKEN
+- DIGITAL_OCEAN_TOKEN
 - TF_CLOUD_KEY
 
 This tells a cloud provider - in our case Digitalocean - what to create for us, so we can deploy our application. We will use a tool called Terraform for it.
@@ -553,11 +553,11 @@ deploy_to_k8s:
             export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"
-            doctl auth init -t $DIGITALOCEAN_TOKEN
+            doctl auth init -t $DIGITAL_OCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
 
             terraform -chdir=./terraform/do_k8s_deploy_app apply \
-              -var do_token=$DIGITALOCEAN_TOKEN \
+              -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
               -var docker_image=$DOCKER_IMAGE \
               -auto-approve
@@ -671,11 +671,11 @@ destroy_k8s_cluster:
             export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"          
-            doctl auth init -t $DIGITALOCEAN_TOKEN
+            doctl auth init -t $DIGITAL_OCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
 
             terraform -chdir=./terraform/do_k8s_deploy_app/ apply -destroy \
-              -var do_token=$DIGITALOCEAN_TOKEN \
+              -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
               -var docker_image=$DOCKER_IMAGE \
               -auto-approve
@@ -687,10 +687,10 @@ destroy_k8s_cluster:
           command: |
             export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
-              -o json -t $DIGITALOCEAN_TOKEN | jq -r '.[0] | .slug')"
+              -o json -t $DIGITAL_OCEAN_TOKEN | jq -r '.[0] | .slug')"
 
             terraform -chdir=./terraform/do_create_k8s apply -destroy \
-              -var do_token=$DIGITALOCEAN_TOKEN \
+              -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
               -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
               -auto-approve
