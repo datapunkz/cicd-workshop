@@ -6,6 +6,7 @@ variable "org_name" {
 variable "org_email" {
   type        = string
   description = "The user email associated with the terraform cloud org."
+  default=""
 }
 
 variable "workspace_name" {
