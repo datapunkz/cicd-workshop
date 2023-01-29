@@ -10,6 +10,7 @@ terraform {
     }
   }
 }
+
 resource "tfe_organization" "org" {
   name  = var.org_name
   email = var.org_email
