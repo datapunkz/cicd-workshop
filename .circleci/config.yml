@@ -106,16 +106,15 @@ jobs:
           terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
-      - terraform/init:
-          path: ./terraform/digital_ocean/do_create_k8s
-          backend_config: remote_backend_config
       - run:
           name: Create K8s Cluster on DigitalOcean
           command: |
             export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITALOCEAN_TOKEN | jq -r '.[0] | .slug')"
-
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_create_k8s init \
+              -backend-config=remote_backend_config
             # Execute k8s creation
             terraform -chdir=terraform/digital_ocean/do_create_k8s apply -auto-approve \
               -var do_token=$DIGITALOCEAN_TOKEN \
@@ -138,12 +137,6 @@ jobs:
           terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
-      - terraform/init:
-          path: ./terraform/digital_ocean/do_create_k8s
-          backend_config: remote_backend_config
-      - terraform/init:
-          path: ./terraform/digital_ocean/do_k8s_deploy_app
-          backend_config: remote_backend_config                    
       - run:
           name: Deploy Application to K8s on DigitalOcean
           command: |
@@ -153,9 +146,9 @@ jobs:
             doctl auth init -t $DIGITALOCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
 
-            # # Initialize terraform with unique org name
-            # terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
-            #   -backend-config=remote_backend_config
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
+              -backend-config=remote_backend_config
 
             # Execute apply comand 
             terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app apply -auto-approve \
@@ -204,12 +197,6 @@ jobs:
           terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
-      - terraform/init:
-          path: ./terraform/digital_ocean/do_create_k8s
-          backend_config: remote_backend_config
-      - terraform/init:
-          path: ./terraform/digital_ocean/do_k8s_deploy_app
-          backend_config: remote_backend_config          
       - run:
           name: Destroy App Deployment
           command: |
@@ -218,6 +205,10 @@ jobs:
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"          
             doctl auth init -t $DIGITALOCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+            
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
+              -backend-config=remote_backend_config
 
             terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app/ apply -destroy -auto-approve \
               -var do_token=$DIGITALOCEAN_TOKEN \
@@ -229,6 +220,10 @@ jobs:
             export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITALOCEAN_TOKEN | jq -r '.[0] | .slug')"
+
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_create_k8s init \
+              -backend-config=remote_backend_config
 
             terraform -chdir=./terraform/digital_ocean/do_create_k8s apply -destroy -auto-approve \
               -var do_token=$DIGITALOCEAN_TOKEN \
