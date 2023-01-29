@@ -17,6 +17,7 @@ def strip_spaces(obj):
 creds = toml.load('credentials.toml').get('keys')
 CIRCLE_TOKEN = strip_spaces(creds.get('circleci_token'))
 CIRCLECI_ORG_SLUG = strip_spaces(creds.get('circleci_org_slug'))
+CIRCLECI_VCS_USER = CIRCLECI_ORG_SLUG.rsplit('/',1)[1]  #Get the users vcs name from the slug
 CIRCLECI_ORG_ID = strip_spaces(creds.get('circleci_org_id'))
 CIRCLECI_BASE_URL = strip_spaces('http://circleci.com/api/v2/')
 CIRCLECI_CONTEXT_NAME_PREFIX = strip_spaces('CICD_WORKSHOP_')
@@ -27,6 +28,7 @@ DOCKER_TOKEN = strip_spaces(creds.get('docker_token'))
 TF_CLOUD_TOKEN = strip_spaces(creds.get('tf_cloud_token'))
 TF_CLOUD_ORG_EMAIL = strip_spaces(creds.get('tf_cloud_org_email'))
 TF_CLOUD_ORG_NAME = strip_spaces(creds.get('tf_cloud_org_name'))
+TF_CLOUD_ORGANIZATION = TF_CLOUD_ORG_NAME + CIRCLECI_VCS_USER   # Create a unique Org Name for TF Cloud
 TF_CLOUD_WORKSPACE = strip_spaces(creds.get('tf_cloud_workspace'))
 DIGITALOCEAN_TOKEN = strip_spaces(creds.get('digitalocean_token'))
 
@@ -134,7 +136,7 @@ print(add_circle_token_to_context_with_name('DIGITAL_OCEAN', 'DIGITALOCEAN_TOKEN
 print(add_circle_token_to_context_with_name('DOCKER', 'DOCKER_PASSWORD', DOCKER_TOKEN))
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_TOKEN', TF_CLOUD_TOKEN))
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_ORG_EMAIL', TF_CLOUD_ORG_EMAIL))
-print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_ORG_NAME', TF_CLOUD_ORG_NAME))
+print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_ORGANIZATION', TF_CLOUD_ORGANIZATION)
 print(add_circle_token_to_context_with_name('TERRAFORM_CLOUD', 'TF_CLOUD_WORKSPACE', TF_CLOUD_WORKSPACE))
 
 
