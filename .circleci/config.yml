@@ -85,7 +85,7 @@ jobs:
       - run:
           name: Provision org and workspaces in Terrform Cloud
           command: |
-            terraform -chdir=./terraform/digital_ocean/tfcloud apply  -auto-approve \
+            terraform -chdir=./terraform/digital_ocean/tfcloud apply -auto-approve \
               -var org_name=$TF_CLOUD_ORGANIZATION \
               -var org_email=$TF_CLOUD_ORG_EMAIL \
               -var workspace_name=$TF_CLOUD_WORKSPACE
@@ -133,7 +133,7 @@ jobs:
           command: |
             echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
             # Create backend file for terraform init with unique TF Cloud org
-            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deploy\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config
       - terraform/install:
           terraform_version: "1.2.0"
           arch: "amd64"
@@ -199,7 +199,7 @@ jobs:
             # Create backend file for terraform init with unique TF Cloud org for K8s cluster
             echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}\"}" > ./terraform/digital_ocean/do_create_k8s/remote_backend_config
             # Create backend file for terraform init with unique TF Cloud org K8s App Deploy
-            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deploy\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config                        
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config                        
       - terraform/install:
           terraform_version: "1.2.0"
           arch: "amd64"
