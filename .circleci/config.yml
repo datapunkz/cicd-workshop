@@ -87,7 +87,7 @@ jobs:
           command: |
             terraform -chdir=./terraform/digital_ocean/tfcloud apply  -auto-approve \
               -var org_name=$TF_CLOUD_ORGANIZATION \
-              -var org_email=$TF_CLOUD_ORG_EMAIL \
+              -var org_email=$TF_CLOUD_ORG_EMAIL
 
   create_do_k8s_cluster:
     docker:
