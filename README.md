@@ -466,7 +466,7 @@ create_do_k8s_cluster:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
       - terraform/install:
-          terraform_version: "1.0.6"
+          terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
       - terraform/init:
@@ -542,7 +542,7 @@ deploy_to_k8s:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
       - terraform/install:
-          terraform_version: "1.0.6"
+          terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
       - terraform/init:
@@ -660,7 +660,7 @@ destroy_k8s_cluster:
           name: Create .terraformrc file locally
           command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc && cat $HOME/.terraformrc
       - terraform/install:
-          terraform_version: "1.0.6"
+          terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
       - terraform/init:
