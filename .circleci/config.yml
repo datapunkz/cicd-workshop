@@ -260,12 +260,12 @@ workflows:
         - build_docker_image:
             context:
               - CICD_WORKSHOP_DOCKER
-        - provision_terraform_cloud:
-            context: 
-              - CICD_WORKSHOP_TERRAFORM_CLOUD
+        # - provision_terraform_cloud:
+        #     context: 
+        #       - CICD_WORKSHOP_TERRAFORM_CLOUD
         - create_do_k8s_cluster:
             requires:
-              - provision_terraform_cloud
+              # - provision_terraform_cloud
               - build_docker_image
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
