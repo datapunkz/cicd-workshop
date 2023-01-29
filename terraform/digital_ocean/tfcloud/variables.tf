@@ -12,7 +12,7 @@ variable "org_email" {
 variable "workspace_name" {
   type  = string
   description = "Name of TFC workspace"
-  default = "circleci-workshop"
+  # default = "circleci-workshop"
 }
 
 variable "execution_mode" {

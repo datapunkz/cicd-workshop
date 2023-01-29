@@ -87,7 +87,8 @@ jobs:
           command: |
             terraform -chdir=./terraform/digital_ocean/tfcloud apply  -auto-approve \
               -var org_name=$TF_CLOUD_ORGANIZATION \
-              -var org_email=$TF_CLOUD_ORG_EMAIL
+              -var org_email=$TF_CLOUD_ORG_EMAIL \
+              -var org_workspace_name=$TF_CLOUD_WORKSPACE
 
   create_do_k8s_cluster:
     docker:
@@ -295,8 +296,8 @@ workflows:
               - CICD_WORKSHOP_DOCKER
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
-        - destroy_terraform_cloud:
-            requires:
-              - destroy_k8s_cluster
-            context:
-              - CICD_WORKSHOP_TERRAFORM_CLOUD
+        # - destroy_terraform_cloud:
+        #     requires:
+        #       - destroy_k8s_cluster
+        #     context:
+        #       - CICD_WORKSHOP_TERRAFORM_CLOUD
