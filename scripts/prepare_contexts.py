@@ -28,7 +28,7 @@ DOCKER_TOKEN = strip_spaces(creds.get('docker_token'))
 TF_CLOUD_TOKEN = strip_spaces(creds.get('tf_cloud_token'))
 TF_CLOUD_ORG_EMAIL = strip_spaces(creds.get('tf_cloud_org_email'))
 TF_CLOUD_ORG_NAME = strip_spaces(creds.get('tf_cloud_org_name'))
-TF_CLOUD_ORGANIZATION = TF_CLOUD_ORG_NAME + CIRCLECI_VCS_USER   # Create a unique Org Name for TF Cloud
+TF_CLOUD_ORGANIZATION = f'{TF_CLOUD_ORG_NAME}-{CIRCLECI_VCS_USER}'   # Create a unique Org Name for TF Cloud
 TF_CLOUD_WORKSPACE = strip_spaces(creds.get('tf_cloud_workspace'))
 DIGITALOCEAN_TOKEN = strip_spaces(creds.get('digitalocean_token'))
 
