@@ -67,28 +67,28 @@ jobs:
           fail-on-issues: false
           monitor-on-build: false
 
-  provision_terraform_cloud:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - checkout
-      - run:
-          name: Create .terraformrc file locally
-          command: |
-            echo -en "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
-      - terraform/install:
-          terraform_version: "1.2.0"
-          arch: "amd64"
-          os: "linux"
-      - terraform/init:
-          path: ./terraform/digital_ocean/tfcloud
-      - run:
-          name: Provision org and workspaces in Terrform Cloud
-          command: |
-            terraform -chdir=./terraform/digital_ocean/tfcloud apply -auto-approve \
-              -var org_name=$TF_CLOUD_ORGANIZATION \
-              -var org_email=$TF_CLOUD_ORG_EMAIL \
-              -var workspace_name=$TF_CLOUD_WORKSPACE
+  # provision_terraform_cloud:
+  #   docker:
+  #     - image: cimg/base:stable
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Create .terraformrc file locally
+  #         command: |
+  #           echo -en "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
+  #     - terraform/install:
+  #         terraform_version: "1.2.0"
+  #         arch: "amd64"
+  #         os: "linux"
+  #     - terraform/init:
+  #         path: ./terraform/digital_ocean/tfcloud
+  #     - run:
+  #         name: Provision org and workspaces in Terrform Cloud
+  #         command: |
+  #           terraform -chdir=./terraform/digital_ocean/tfcloud apply -auto-approve \
+  #             -var org_name=$TF_CLOUD_ORGANIZATION \
+  #             -var org_email=$TF_CLOUD_ORG_EMAIL \
+  #             -var workspace_name=$TF_CLOUD_WORKSPACE
 
   create_do_k8s_cluster:
     docker:
