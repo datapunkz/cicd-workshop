@@ -3,6 +3,12 @@ variable "do_token" {
   description = "Your DigitalOcean API token. See https://cloud.digitalocean.com/account/api/tokens to generate a token."
 }
 
+variable "do_data_center" {
+ type = string
+ descdescription = "Digital Ocean data center"
+ default = "ams3"
+}
+
 variable "cluster_name" {
   type  = string
   description = "Name for Kubernetes Cluster"
