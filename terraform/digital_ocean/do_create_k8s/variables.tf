@@ -5,7 +5,7 @@ variable "do_token" {
 
 variable "do_data_center" {
   type = string
-  description = "value" = "value" = "value" = "Digital Ocean data center"
+  description = "Digital Ocean data center"
   default = "ams3"
 }
 
