@@ -4,9 +4,9 @@ variable "do_token" {
 }
 
 variable "do_data_center" {
- type = string
- descdescription = "Digital Ocean data center"
- default = "ams3"
+  type = string
+  description = "value" = "value" = "value" = "Digital Ocean data center"
+  default = "ams3"
 }
 
 variable "cluster_name" {
