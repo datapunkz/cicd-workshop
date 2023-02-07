@@ -73,13 +73,57 @@ jobs:
           fail-on-issues: true
           monitor-on-build: false
 
+create_do_k8s_cluster:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - install_doctl:
+          version: "1.78.0"
+      - run:
+          name: Create .terraformrc file locally
+          command: |
+            echo -en "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
+            # Create backend file for terraform init with unique TF Cloud org
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}\"}" > ./terraform/digital_ocean/do_create_k8s/remote_backend_config
+      - terraform/install:
+          terraform_version: "1.2.0"
+          arch: "amd64"
+          os: "linux"
+      - terraform/init:
+          path: ./terraform/do_create_k8s
+      - run:
+          name: Create K8s Cluster on DigitalOcean
+          command: |
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
+            export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
+              -o json -t $DIGITAL_OCEAN_TOKEN | jq -r '.[0] | .slug')"
+
+            terraform -chdir=./terraform/do_create_k8s apply \
+              -var do_token=$DIGITAL_OCEAN_TOKEN \
+              -var cluster_name=$CLUSTER_NAME \
+              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
+              -auto-approve
 workflows:
   test_scan_deploy:
       jobs:
         - build_and_test
         - dependency_vulnerability_scan:
             context:
-              - CICD_WORKSHOP_DOCKER
+              - cicd-workshop
         - build_docker_image:
             context:
-              - CICD_WORKSHOP_SNYK
+              - cicd-workshop
+        - create_do_k8s_cluster:
+            requires:
+              - dependency_vulnerability_scan
+              - build_docker_image
+              - build_and_test
+            context:
+              - cicd-workshop
+        - deploy_to_k8s:
+            requires:
+              - create_do_k8s_cluster
+              - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD

@@ -422,8 +422,6 @@ orbs:
   terraform: circleci/terraform@3.2.0
 ```
 
----DONE TILL HERE---
-
 - Add a command to install the Digitalocean CLI - `doctl`. This will be reusable in all jobs across the entire pipeline:
 
 ```yaml
