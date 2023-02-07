@@ -145,7 +145,7 @@ Now review the `.circleci/config.yaml` find the `jobs` section, and a job called
 version: 2.1
 
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: cimg/node:16.16.0
     steps:
@@ -158,9 +158,9 @@ jobs:
             npm run test
 
 workflows:
-  build_test_deploy:
+  test_scan_deploy:
     jobs:
-      - build
+      - build_and_test
 
 ```
 
@@ -193,7 +193,7 @@ build_and_test:
 Now, let's look at dependencies. At the moment everything is always downloaded from scratch. We can instead store dependencies to cache to skip the download. Change the `build` job accordingly:
 
 ```yaml
-build:
+build_and_test:
     docker:
       - image: cimg/node:16.16.0
     steps:
@@ -215,8 +215,6 @@ build:
             npm run test-ci
 ```
 
---- DONE UNTIL THIS POINT ---
-
 We have cached dependencies manually, but there is a cleaner approach - by using an orb. Orbs are a CircleCI concept for reusing configuration code. We will introduce the new [orb for Node.JS](https://circleci.com/developer/orbs/orb/circleci/node)
 
 ```yaml
@@ -230,7 +228,7 @@ We can use the orb to install packages, which will handle caching of our depende
 
 ```yaml
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: cimg/node:16.16.0
     steps:
@@ -239,125 +237,26 @@ jobs:
       - run:
           name: Run tests
           command: npm run test-ci
-
-```
-
-```yaml
-jobs:
-  build:
-    docker:
-      - image: cimg/node:16.16.0
-    steps:
-      - checkout
-      - run:
-          command: |
-            npm install
-      - run:
-          command: |
-            npm run lint
-      - run:
-          command: |
-            npm run test-ci
-      - run:
-          command: |
-            npm run build
-```
-
-- Now let's create a workflow that will run our job: 
-
-```yaml
-workflows:
-  test_scan_deploy:
-    jobs:
-      - build_and_test
-```
-
-- Report test results to CircleCI. Add the following run commands to `build_and_test` job:
-
-```yaml
-jobs:
-  build_and_test:
-    ...
-      - run:
-          name: Run tests
-          command: npm run test-ci
-      - run:
-          name: Copy tests results for storing
-          command: |
-            cp test-results.xml test-results/
-          when: always
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-```
-
-- Utilise cache for dependencies to avoid installing each time:
-
-```yaml
-jobs:
-    build_and_test:
-    ...
-    steps:
-        - checkout
-        - restore_cache:
-            key: v1-deps-{{ checksum "package-lock.json" }}
-        - run:
-            name: Install deps
-            command: npm install
-        - save_cache:
-            key: v1-deps-{{ checksum "package-lock.json" }}
-            paths: 
-                - node_modules   
-        - run:
-            name: Run tests
-            command: npm run test-ci
-
-```
-
-### Using the orb instead of installing and caching dependencies manually
-
-Now let's replace our existing process for dependency installation and running tests by using an orb - this saves you a lot of configuration and manages caching for you. Introduce the orb: 
-
-```yaml
-version: 2.1
-
-orbs: 
-    node: circleci/node@5.0.2
-```
-
-- Replace the job caching and dependency installation code with the call to the `node/install_packages` in the Node orb:
-
-```yaml
-jobs:
-  build_and_test:
-    ...
-    steps:
-        - checkout
-        - node/install-packages
-        - run:
-            name: Run tests
-            command: npm run test-ci
 ```
 
 ### Secrets and Contexts
 
-CircleCI lets you store secrets safely on the platform where they will be encrypted and only made available to the executors as environment variables. The first secrets you will need are credentials for Docker Hub which you'll use to deploy your image to Docker Hub.
+CircleCI lets you store secrets on the platform where they will only made available to the executors as environment variables. The first secrets you will need are credentials for Docker Hub which you'll use to deploy your image to Docker Hub.
 
 We have prepared a script for you to create a context and set it up with all the secrets you will need in CircleCI. This will use the CircleCI API.
-
 You should have all the required accounts for third party services already, and are just missing the CircleCI API token and the organization ID:
 
 - In app.circleci.com click on your user image (bottom left)
 - Go to Personal API Tokens 
-- Generate new API token and insert it `credentials.toml`
+- Generate new API token and insert it to `credentials.toml` under `docker_token`
+- Insert your Docker Hub username to `credentials.toml` under `docker_login`
 - In app.circleci.com click on the Organization settings. 
-- Copy the Organization ID value and insert it in `credentials.toml`
+- Copy the Organization ID value and insert it in `credentials.toml` under `circleci_org_id`. 
 
 Make sure that you have all the required service variables set in `credentials.toml`, and then run the script:
 
 ```bash
-python scripts/prepare_contexts.py
+python3 scripts/prepare_contexts.py
 ```
 
 Most of the things you do in CircleCI web interface can also be done with the API. You can inspect the newly created context and secrets by going to your organization settings. Now we can create a new job to build and deploy a Docker image.
@@ -414,7 +313,7 @@ workflows:
         - build_and_test
         - build_docker_image:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
 ```
 
 This runs both jobs in parallel. We might want to run them sequentially instead, so Docker deployment only happens when the tests have passed. Do this by adding a `requires` stanza to the `build_docker_image` job:
@@ -426,22 +325,12 @@ workflows:
         - build_and_test
         - build_docker_image:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
             requires:
               - build_and_test
 ```
 
-🎉 Congratulations, you've completed the first part of the exercise!
-
-## Chapter 2 - A realistic CI/CD pipeline
-
-In this section you will learn about cloud native paradigms, shift left security scanning, infrastructure provisioning, and deployment of infrastructure!
-
-If you got lost in the previous chapter, the initial state of the configuration is in `scripts/do/configs/config_2.yml`. You can restore it by running `./scripts/do_2.sh`.
-
-### Integrate automated dependency vulnerability scan
-
-- First let's integrate a security scanning tool in our process. We will use Snyk, for which you should already have the account created and environment variable set.
+- Now, let's integrate a dependency scanning tool in our process. We will use Snyk, for which you should already have the account created and environment variable set.
 
 - Add Snyk orb: 
 
@@ -470,7 +359,7 @@ jobs:
           monitor-on-build: false
 ```
 
-- Add the job to workflow. Don't forget to give it the context!:
+- Add the job to workflow. Don't forget to give it the context - this time we used `CICD_WORKSHOP_SNYK`:
 
 ```yaml
 workflows:
@@ -479,10 +368,10 @@ workflows:
         - build_and_test
         - dependency_vulnerability_scan:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_SNYK
         - build_docker_image:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
 ```
 
 - This will now run the automated security scan for your dependencies and fail your job if any of them have known vulnerabilities. Now let's add the security scan to our Docker image build job as well:
@@ -509,6 +398,11 @@ workflows:
           image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
           tag: 0.1.<< pipeline.number >>
 ```
+
+🎉 Congratulations, you've completed the first part of the exercise!
+
+## Chapter 2 - Cloud Native Deployments
+
 
 ### Cloud Native deployments
 
