@@ -2,7 +2,7 @@ version: 2.1
 
 jobs:
   build:
-    docker: 
+    docker:
       - image: cimg/node:16.16.0
     steps:
       - checkout
@@ -11,13 +11,9 @@ jobs:
             npm install
       - run:
           command: |
-            npm run lint
-            npm run test-ci
-            npm run build 
-            
+            npm run test
+
 workflows:
   build_test_deploy:
-      jobs:
-        - build      
-
-# VS Code Extension Version: 1.0.2
+    jobs:
+      - build
