@@ -2,6 +2,24 @@ version: 2.1
 
 orbs:
   node: circleci/node@5.1.0
+  docker: circleci/docker@2.2.0
+  snyk: snyk/snyk@1.4.0
+  terraform: circleci/terraform@3.2.0
+
+commands:
+  install_doctl:
+    parameters:
+      version:
+        default: "1.92.0"
+        type: string
+    steps:
+      - run:
+          name: Install doctl client
+          command: |
+            cd ~
+            wget https://github.com/digitalocean/doctl/releases/download/v<<parameters.version>>/doctl-<<parameters.version>>-linux-amd64.tar.gz
+            tar xf ~/doctl-<<parameters.version>>-linux-amd64.tar.gz
+            sudo mv ~/doctl /usr/local/bin
 
 jobs:
   build_and_test:

@@ -443,21 +443,7 @@ commands:
             sudo mv ~/doctl /usr/local/bin
 ```
 
-- In app.terraform.io create a new organization, and give it a name. Create a new workspace called `cicd-workshop-do`. 
-In the workspace GUI, go to `Settings`, and make sure to switch the `Execution Mode` to `Local`.
-
-- In the file `terraform/do_create_k8s/main.tf` locate the `backend "remote"` section and make sure to change the name to your organization:
-
-```go
-  backend "remote" {
-    organization = "your_cicd_workshop_org"
-    workspaces {
-      name = "cicd-workshop-do"
-    }
-  }
-```
-
-Add a job to create a Terraform cluster
+Add a job to create a DigitalOcean cluster using Terraform
 
 ```yaml
 create_do_k8s_cluster:
@@ -469,7 +455,10 @@ create_do_k8s_cluster:
           version: "1.78.0"
       - run:
           name: Create .terraformrc file locally
-          command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
+          command: |
+          echo -en "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
+            # Create backend file for terraform init with unique TF Cloud org
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}\"}" > ./terraform/digital_ocean/do_create_k8s/remote_backend_config
       - terraform/install:
           terraform_version: "1.2.0"
           arch: "amd64"
@@ -479,7 +468,7 @@ create_do_k8s_cluster:
       - run:
           name: Create K8s Cluster on DigitalOcean
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITAL_OCEAN_TOKEN | jq -r '.[0] | .slug')"
 
@@ -511,94 +500,18 @@ workflows:
               - build_and_test
             context:
               - cicd-workshop
-            
-```
-
-### Deploying to your Kubernetes cluster 
-
-Now that you have provisioned your infrastructure - a Kubernetes cluster on Digitalocean. It's time to deploy the application to this cluster.
-
-- In app.terraform.io create a new workspace called `deploy-cicd-workshop-do`. 
-In the workspace GUI, go to `Settings`, and make sure to switch the `Execution Mode` to `Local`. You should now have two workspaces. One holds the infrastructure definitions, and one for deployments.
-
-- In the file `terraform/do_k8s_deploy_app/main.tf` locate the `backend "remote"` section and make sure to change the name to your organization:
-
-```go
-  backend "remote" {
-    organization = "your_cicd_workshop_org"
-    workspaces {
-      name = "cicd-workshop-do"
-    }
-  }
-```
-
-Add a job `deploy_to_k8s` which will perform the deployment:
-
-```yaml
-
-deploy_to_k8s:
-    docker:
-      - image: cimg/node:14.16.0
-    steps:
-      - checkout
-      - install_doctl:
-          version: "1.78.0"
-      - run:
-          name: Create .terraformrc file locally
-          command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc
-      - terraform/install:
-          terraform_version: "1.2.0"
-          arch: "amd64"
-          os: "linux"
-      - terraform/init:
-          path: ./terraform/do_k8s_deploy_app
-      - run:
-          name: Deploy Application to K8s on DigitalOcean
-          command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
-            export TAG=0.1.<< pipeline.number >>
-            export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"
-            doctl auth init -t $DIGITAL_OCEAN_TOKEN
-            doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
-
-            terraform -chdir=./terraform/do_k8s_deploy_app apply \
-              -var do_token=$DIGITAL_OCEAN_TOKEN \
-              -var cluster_name=$CLUSTER_NAME \
-              -var docker_image=$DOCKER_IMAGE \
-              -auto-approve
-
-            # Save the Load Balancer Public IP Address
-            export ENDPOINT="$(terraform -chdir=./terraform/do_k8s_deploy_app output lb_public_ip)"
-            mkdir -p /tmp/do_k8s/
-            echo 'export ENDPOINT='${ENDPOINT} > /tmp/do_k8s/dok8s-endpoint
-      - persist_to_workspace:
-          root: /tmp/do_k8s/
-          paths:
-            - "*"
-
-```
-
-- Add the new job to the workflow - add `requires` statements to only start deployment when cluster creation job has completed
-
-```yaml
-workflows:
-  test_scan_deploy:
-    jobs:
-      ...
-      - create_do_k8s_cluster:
-            context:
-              - cicd-workshop
-      - deploy_to_k8s:
-          requires:
-            - create_do_k8s_cluster
-          context:
-            - cicd-workshop
+        - deploy_to_k8s:
+            requires:
+              - create_do_k8s_cluster
+              - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
 ```
 
 - Now that our application has been deployed it should be running on our brand new Kubernetes cluster! Yay us, but it's not yet time to call it a day. We need to verify that the app is actually running, and for that we need to test in production. Let's introduce something called a Smoke test!
 
 
-- Add a new job - `smoketest_k8s_deployment. This uses a bash script to make HTTP requests to the deployed app and verifies the responses are what we expect. We also use a CircleCI Workspace to pass the endpoint of the deployed application to our test. 
+- Add a new job - `smoketest_k8s_deployment`. This uses a bash script to make HTTP requests to the deployed app and verifies the responses are what we expect. We also use a CircleCI Workspace to pass the endpoint of the deployed application to our test. 
 
 ```yaml
   smoketest_k8s_deployment:
