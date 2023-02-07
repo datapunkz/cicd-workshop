@@ -4,7 +4,8 @@
 
 Knowledge of Git version control system
 GitHub account - where the code is hosted
-A code editor - you can use GitPod ...
+A code editor - you can use GitPod from the browser (preferred approach) which comes preloaded with all the dependencies.
+Alternatively you can use locally installed editor. We are demoing this on VS Code.
 
 ## Chapter 0 - The Prologue and Prep
 
@@ -14,8 +15,7 @@ This project can run on your machine if you have the correct dependencies instal
 
 To open this in Gitpod, copy your fork's GitHub URL, and combine it with this Gitpod prefix - `https://gitpod.io/#` and open it in a new tab.
 
-The full URL should look something like this: `https://gitpod.io/#/https://github.com/YOUR_GITHUB_USERNAME/cicd-workshop`.
-
+The full URL should look something like this: `https://gitpod.io/#https://github.com/YOUR_GITHUB_USERNAME/THIS_REPO_NAME`.
 
 This lets you spin up an environment with all the dependencies preinstalled, remotely connect to it, and work on it as it was on your machine. This is much faster, believe us, we measured it with science. 
 
@@ -31,38 +31,56 @@ Copy over the credentials source file. This is untracked in Git and will be used
 cp scripts/util/credentials.sample.toml credentials.toml
 ```
 
+Install Python depedencies:
+
+```
+pip3 install -r requirements.txt
+```
+
 ### IMPORTANT! Sign up for the required services and prepare credentials
 
 If you don't do this, you'll have a bad time.
 
 #### DigitalOcean
 
-- Create an account with DigitalOcean - https://cloud.digitalocean.com/ We will use DigitalOcean to deploy our application to. 
+We will provision our resources on the DigitalOcean cloud platform. Create an account with DigitalOcean - https://cloud.digitalocean.com/ 
+During the workshop we will provide you with a coupon code you can use to get free credits for the workshop.
+
 - Go to API (left)
-- Generate New Token with read and write access
-- copy the token string to `credentials.toml` - `digital_ocean_token`
+- Generate New Token with read and write access.
+- Copy the token string to `credentials.toml` - `digital_ocean_token`
  
 #### Terraform Cloud
 
-- Create an account with Hashicorp Terraform - https://app.terraform.io/ We will use Terraform to provision our infrastructure on Digital Ocean.
-- Got to your user settings (top right), and select Tokens
-- Create an API token 
+We will use Terraform during the workshop to provision our infrastructure on Digital Ocean. 
+Terraform Cloud is the SaaS backend for Terraform we will use to store our infrastructure as code.
+
+- Create an account with Terraform Cloud - https://app.terraform.io/ 
+- Go to your user settings by clicking on your avatar (top left), and select "User Settings"
+- From there, click on "Tokens"
+- Create an API token
 - Copy the token string to `credentials.toml` - `tf_cloud_key`
 
 #### Docker Hub
 
-- Create an account with Docker Hub - https://hub.docker.com/ We will use Docker Hub as a repository for our app images.
-- Go to your user settings (top right), and select Security
+We will use Docker Hub as a repository to store our app images.
+
+- Create an account with Docker Hub - https://hub.docker.com/ 
+- Go to "Account Settings" (top right), and select Security
 - Create New Access Token
 - copy your username to `credentials.toml` - `docker_username`
 - copy your token string to `credentials.toml` - `docker_token`
 
 #### Snyk
 
-- Create an account with Snyk - https://app.snyk.io/ - We will use Snyk to run an automated security scan of our application an its dependencies. 
-- Go to your Account settings (top right)
-- Click to show Auth Token 
-- Copy your token string to `credentials.toml` - `snyk_token`
+We will use Snyk to run an automated security scan of our application an its dependencies. 
+
+- Create an account with Snyk - https://app.snyk.io/
+- Skip the integration step by clicking "Choose other integration" at the bottom of the options list.
+- Click on your avatar in the bottom of the sidebar to show a dropdown
+- Choose "Account Settings"
+- Click to show your Auth Token
+- Copy the auth token string to `credentials.toml` - `snyk_token`
 
 ### How this workshop works
 
@@ -75,81 +93,98 @@ The scripts to run are:
 `./scripts/do_1_start.sh` - Beginning of first chapter
 `./scripts/do_2.sh` - End of first chapter/Start of second chapter
 `./scripts/do_3.sh` - End of second chapter/Start of third chapter
-`./scripts/do_4.sh` - Final state
-`./scripts/do_5_dynamic.sh` - Final state using Dynamic configuration
+`./scripts/do_4_final.sh` - Final state
 
 The chapters will copy and overwrite certain files in your workspace, so after running each script, commit the changes and push it, which will run it on CircleCI.
 
 ### Overview of the project
 
-The project is a simple web application, that is packaged in a Docker container, and deployed on Kubernetes - hosted on DigitalOcean infrastructure. 
-We also have some tests, a security scan, building the image, provisioning the infrastructure and deploying the application.
+The project is a simple web application, that is packaged in a Docker container, and deployed to DigitalOcean hosted Kubernetes cluster, provisioned using Terraform.
 
 ### Workshop topics covered
 
 #### Chapter 1 - Basics of CI/CD
 
-- YAML
-- Setting up the first pipeline
-- Writing a job and workflow
-- Running tests
+- Review of a basic CI/CD pipeline
+- Running tests and checks in parallel
 - Reporting test results
-- Installing dependencies manually
 - Caching dependencies
-- Using the orb to install and cache dependencies 
+- Using the orb to install and cache dependencies
 - Setting up secrets and contexts
-- Build the docker image & push to docker hub
+- Building and pushing a Docker image
+- Scanning vulnerabilities
 
-#### Chapter 2 - A realistic CI/CD pipeline
+#### Chapter 2 - Infrastructure provisioning and deployments
 
-- Run security scan w/ Snyk
 - Cloud native principles
-- Provision infrastructure with Terraform on DigitalOcean
-- Deploy to infrastructure
+- Introduction to Terraform
+- Provision a K8s cluster with Terraform on DigitalOcean
+- Deploy to the new cluster with Terraform
 - Run a smoke test on deployed app
 - Destroy the deployed application and provisioned infrastructure
-- Manual approval step before destroy
-- approve and destroy (explain approval job)
 
-#### Chapter 3 - Advanced CircleCI concepts
 
+#### Chapter 3 - Advanced CI/CD concepts
+
+- Manual approval step before destroying
 - Filtering pipelines on branches and tags
-- Using test splitting to tear down a long running test suite
-- Running test in matrix across multiple versions
-- Scheduling pipelines and using pipeline parametres to drive the flow
 
-#### Chapter 4 - Using Dynamic Configuration to select what gets built when
-
-- Add a flow that only build the application and run tests if files outside of scripts have changed
-
-## Chapter 1 - Basics of CircleCI
+## Chapter 1 - Basics of CI/CD
 
 Most of our work will be in `./circleci/config.yml` - the CircleCI configuration file. This is where we will be describing our CI/CD pipelines.
-This workshop is written in chapters, so you can jump between them by running scripts in `srcipts/` dir, if you get lost and want to catch up with something.
+
+This workshop is written in chapters, so you can jump between them by running scripts in `sripts/` dir, if you get lost and want to catch up with something.
 To begin, prepare your environment for the initial state by running the start script: `./scripts/do_1_start.sh`
 
 Go to app.circleci.com, and if you haven't yet, log in with your GitHub account (or create a new one).
 Navigate to the `Projects` tab, and find this workshop project there - `cicd-workshop`.
 
-First we will create a basic continuous integration pipeline, which will run your tests each time you commit some code. Run a commit for each instruction.
+We will start off with a basic continuous integration pipeline, which will run your tests each time you commit some code. Run a commit for each instruction. The first pipeline is already configured, if it's not you can run: `./scripts/do_0_start.sh` to create the environment.
 
-- Run: `./scripts/do_0_start.sh` to create the environment.
-- In the `.circleci/config.yaml` find the `jobs` section, and add a job called `build_and_test`:
+Now review the `.circleci/config.yaml` find the `jobs` section, and a job called `build`, and workflow called `build_test_deploy`:
 
 ```yaml
-...
+version: 2.1
+
 jobs:
-  build_and_test:
+  build:
     docker:
       - image: cimg/node:16.16.0
     steps:
       - checkout
       - run:
-          name: Install deps
-          command: npm install
+          command: |
+            npm install
+            npm run test
+
+workflows:
+  build_test_deploy:
+    jobs:
+      - build
+
+```
+
+Original configuration has multiple commands in a single job. That is not ideal as any one of these can fail and we won't quickly know where it failed. We can split across multiple commands:
+
+```yaml
+jobs:
+  build:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
       - run:
-          name: Run tests
-          command: npm run test-ci
+          command: |
+            npm install
+      - run:
+          command: |
+            npm run lint
+      - run:
+          command: |
+            npm run test-ci
+      - run:
+          command: |
+            npm run build
 ```
 
 - Now let's create a workflow that will run our job: 
