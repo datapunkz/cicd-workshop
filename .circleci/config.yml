@@ -104,6 +104,18 @@ create_do_k8s_cluster:
               -var cluster_name=$CLUSTER_NAME \
               -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
               -auto-approve
+smoketest_k8s_deployment:
+  docker:
+    - image: cimg/base:stable
+  steps:
+    - checkout
+    - attach_workspace:
+        at: /tmp/do_k8s/
+    - run:
+        name: Smoke Test K8s App Deployment
+        command: |
+          source /tmp/do_k8s/dok8s-endpoint
+          ./test/smoke_test $ENDPOINT
 workflows:
   test_scan_deploy:
       jobs:
@@ -127,3 +139,6 @@ workflows:
               - CICD_WORKSHOP_DOCKER
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
+        - smoketest_k8s_deployment:
+            requires:
+              - deploy_to_k8s

@@ -496,7 +496,7 @@ workflows:
               - dependency_vulnerability_scan
               - build_docker_image
               - build_and_test
-            context:
+            context: 
               - cicd-workshop
         - deploy_to_k8s:
             requires:
@@ -542,20 +542,21 @@ workflows:
             context:
               - cicd-workshop
         - create_do_k8s_cluster:
-            context:
-              - cicd-workshop
-        - deploy_to_k8s:
             requires:
               - dependency_vulnerability_scan
               - build_docker_image
               - build_and_test
-              - create_do_k8s_cluster
             context:
               - cicd-workshop
+        - deploy_to_k8s:
+            requires:
+              - create_do_k8s_cluster
+              - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
         - smoketest_k8s_deployment:
             requires:
               - deploy_to_k8s
-
 ```
 
 ### Tear down the infrastructure
