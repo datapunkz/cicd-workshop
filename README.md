@@ -106,27 +106,26 @@ The project is a simple web application, that is packaged in a Docker container,
 #### Chapter 1 - Basics of CI/CD
 
 - Review of a basic CI/CD pipeline
-- Running tests and checks in parallel
+- Reporting test results
 - Reporting test results
 - Caching dependencies
 - Using the orb to install and cache dependencies
 - Setting up secrets and contexts
 - Building and pushing a Docker image
-- Scanning vulnerabilities
+- Scanning for vulnerabilities
 
 #### Chapter 2 - Infrastructure provisioning and deployments
 
 - Cloud native principles
 - Introduction to Terraform
-- Provision a K8s cluster with Terraform on DigitalOcean
-- Deploy to the new cluster with Terraform
-- Run a smoke test on deployed app
-- Destroy the deployed application and provisioned infrastructure
-
+- Provisioning a K8s cluster with Terraform on DigitalOcean
+- Destroying the provisioned infrastructure
+- Deployment to the new cluster with Terraform
+- Running a smoke test on the deployed app
 
 #### Chapter 3 - Advanced CI/CD concepts
-
-- Manual approval step before destroying
+ 
+- Manual approval step before destroying infrastructure
 - Filtering pipelines on branches and tags
 
 ## Chapter 1 - Basics of CI/CD
@@ -155,6 +154,8 @@ jobs:
       - run:
           command: |
             npm install
+      - run:
+          command: |
             npm run test
 
 workflows:
