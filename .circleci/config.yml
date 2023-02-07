@@ -11,7 +11,17 @@ jobs:
             npm install
       - run:
           command: |
-            npm run test
+            npm run test-ci
+      - run:
+          name: Copy tests results for storing
+          command: |
+            mkdir test-results
+            cp test-results.xml test-results/
+          when: always
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
 
 workflows:
   build_test_deploy:

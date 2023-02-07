@@ -107,7 +107,6 @@ The project is a simple web application, that is packaged in a Docker container,
 
 - Review of a basic CI/CD pipeline
 - Reporting test results
-- Reporting test results
 - Caching dependencies
 - Using the orb to install and cache dependencies
 - Setting up secrets and contexts
@@ -167,7 +166,33 @@ workflows:
 
 --- DONE UNTIL THIS POINT ---
 
-Original configuration has multiple commands in a single job. That is not ideal as any one of these can fail and we won't quickly know where it failed. We can split across multiple commands:
+Original configuration has a single job to test our code. 
+Let's change the `build_and_test` job by reporting the results it to CircleCI.
+
+```yaml
+build_and_test:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - run:
+          name: Run tests
+          command: npm run test-ci
+      - run:
+          name: Copy tests results for storing
+          command: |
+            mkdir test-results
+            cp test-results.xml test-results/
+          when: always
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+
+```
+
+
+
 
 ```yaml
 jobs:
