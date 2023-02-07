@@ -165,6 +165,8 @@ workflows:
 
 ```
 
+--- DONE UNTIL THIS POINT ---
+
 Original configuration has multiple commands in a single job. That is not ideal as any one of these can fail and we won't quickly know where it failed. We can split across multiple commands:
 
 ```yaml
