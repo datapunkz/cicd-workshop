@@ -6,9 +6,18 @@ jobs:
       - image: cimg/node:16.16.0
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
+            - v1-npm-deps-{{ arch }}-
+            - v1-npm-deps-
       - run:
           command: |
             npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
           command: |
             npm run test-ci

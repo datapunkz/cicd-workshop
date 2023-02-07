@@ -167,7 +167,7 @@ workflows:
 --- DONE UNTIL THIS POINT ---
 
 Original configuration has a single job to test our code. 
-Let's change the `build_and_test` job by reporting the results it to CircleCI.
+Let's change the `build_and_test` job by reporting the results it to CircleCI:
 
 ```yaml
 build_and_test:
@@ -191,8 +191,12 @@ build_and_test:
 
 ```
 
+Now, let's look at dependencies. At the moment everything is always downloaded from scratch. We can instead store dependencies to cache to skip the download:
+
+```yaml
 
 
+```
 
 ```yaml
 jobs:
