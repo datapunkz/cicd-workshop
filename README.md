@@ -164,7 +164,6 @@ workflows:
 
 ```
 
---- DONE UNTIL THIS POINT ---
 
 Original configuration has a single job to test our code. 
 Let's change the `build_and_test` job by reporting the results it to CircleCI:
@@ -191,10 +190,55 @@ build_and_test:
 
 ```
 
-Now, let's look at dependencies. At the moment everything is always downloaded from scratch. We can instead store dependencies to cache to skip the download:
+Now, let's look at dependencies. At the moment everything is always downloaded from scratch. We can instead store dependencies to cache to skip the download. Change the `build` job accordingly:
 
 ```yaml
+build:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
+            - v1-npm-deps-{{ arch }}-
+            - v1-npm-deps-
+      - run:
+          command: |
+            npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-npm-deps-{{ arch }}-{{ checksum "package-lock.json" }}
+      - run:
+          command: |
+            npm run test-ci
+```
 
+--- DONE UNTIL THIS POINT ---
+
+We have cached dependencies manually, but there is a cleaner approach - by using an orb. Orbs are a CircleCI concept for reusing configuration code. We will introduce the new [orb for Node.JS](https://circleci.com/developer/orbs/orb/circleci/node)
+
+```yaml
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+```
+
+We can use the orb to install packages, which will handle caching of our dependencies for us. Change the `build` job accordingly:
+
+```yaml
+jobs:
+  build:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          name: Run tests
+          command: npm run test-ci
 
 ```
 
