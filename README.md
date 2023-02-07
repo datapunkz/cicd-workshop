@@ -408,9 +408,7 @@ workflows:
 
 We often use CI/CD pipelines to create our infrastructure, not just run our applications. In the following steps we will be doing just that.
 
-First make sure you have all the credentials created and set in your `cicd-workshop` context:
-- DIGITAL_OCEAN_TOKEN
-- TF_CLOUD_KEY
+First make sure you have all the credentials created and set in your contexts - as set in your `credentials.toml`.
 
 This tells a cloud provider - in our case Digitalocean - what to create for us, so we can deploy our application. We will use a tool called Terraform for it.
 
@@ -418,11 +416,13 @@ This tells a cloud provider - in our case Digitalocean - what to create for us, 
 
 ```yaml
 orbs:
-  node: circleci/node@5.0.2
-  docker: circleci/docker@2.1.1
-  snyk: snyk/snyk@1.2.3
-  terraform: circleci/terraform@3.0.0
+  node: circleci/node@5.1.0
+  docker: circleci/docker@2.2.0
+  snyk: snyk/snyk@1.4.0
+  terraform: circleci/terraform@3.2.0
 ```
+
+---DONE TILL HERE---
 
 - Add a command to install the Digitalocean CLI - `doctl`. This will be reusable in all jobs across the entire pipeline:
 
@@ -431,7 +431,7 @@ commands:
   install_doctl:
     parameters:
       version:
-        default: "1.79.0"
+        default: "1.92.0"
         type: string
     steps:
       - run:
