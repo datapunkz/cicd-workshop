@@ -67,29 +67,6 @@ jobs:
           fail-on-issues: false
           monitor-on-build: false
 
-  # provision_terraform_cloud:
-  #   docker:
-  #     - image: cimg/base:stable
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Create .terraformrc file locally
-  #         command: |
-  #           echo -en "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
-  #     - terraform/install:
-  #         terraform_version: "1.2.0"
-  #         arch: "amd64"
-  #         os: "linux"
-  #     - terraform/init:
-  #         path: ./terraform/digital_ocean/tfcloud
-  #     - run:
-  #         name: Provision org and workspaces in Terrform Cloud
-  #         command: |
-  #           terraform -chdir=./terraform/digital_ocean/tfcloud apply -auto-approve \
-  #             -var org_name=$TF_CLOUD_ORGANIZATION \
-  #             -var org_email=$TF_CLOUD_ORG_EMAIL \
-  #             -var workspace_name=$TF_CLOUD_WORKSPACE
-
   create_do_k8s_cluster:
     docker:
       - image: cimg/base:stable
@@ -230,26 +207,26 @@ jobs:
               -var cluster_name=$CLUSTER_NAME \
               -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
 
-  # destroy_terraform_cloud:
-  #   docker:
-  #     - image: cimg/base:stable
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Create .terraformrc file locally
-  #         command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
-  #     - terraform/install:
-  #         terraform_version: "1.2.0"
-  #         arch: "amd64"
-  #         os: "linux"
-  #     - terraform/init:
-  #         path: ./terraform/digital_ocean/tfcloud
-  #     - run:
-  #         name: Provision org and workspaces in Terrform Cloud
-  #         command: |
-  #           terraform -chdir=./terraform/digital_ocean/tfcloud destroy \
-  #             -var org_name=$TF_CLOUD_ORG_NAME -var org_email=$TF_CLOUD_ORG_EMAIL \
-  #             -auto-approve
+  destroy_terraform_cloud:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Create .terraformrc file locally
+          command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
+      - terraform/install:
+          terraform_version: "1.2.0"
+          arch: "amd64"
+          os: "linux"
+      - terraform/init:
+          path: ./terraform/digital_ocean/tfcloud
+      - run:
+          name: Provision org and workspaces in Terrform Cloud
+          command: |
+            terraform -chdir=./terraform/digital_ocean/tfcloud destroy \
+              -var org_name=$TF_CLOUD_ORG_NAME -var org_email=$TF_CLOUD_ORG_EMAIL \
+              -auto-approve
 workflows:
   test_scan_deploy:
       jobs:
@@ -260,12 +237,8 @@ workflows:
         - build_docker_image:
             context:
               - CICD_WORKSHOP_DOCKER
-        # - provision_terraform_cloud:
-        #     context: 
-        #       - CICD_WORKSHOP_TERRAFORM_CLOUD
         - create_do_k8s_cluster:
             requires:
-              # - provision_terraform_cloud
               - build_docker_image
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
@@ -290,8 +263,3 @@ workflows:
             context:
               - CICD_WORKSHOP_DIGITAL_OCEAN
               - CICD_WORKSHOP_TERRAFORM_CLOUD
-        # - destroy_terraform_cloud:
-        #     requires:
-        #       - destroy_k8s_cluster
-        #     context:
-        #       - CICD_WORKSHOP_TERRAFORM_CLOUD
