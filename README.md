@@ -59,7 +59,7 @@ Terraform Cloud is the SaaS backend for Terraform we will use to store our infra
 - Go to your user settings by clicking on your avatar (top left), and select "User Settings"
 - From there, click on "Tokens"
 - Create an API token
-- Copy the token string to `credentials.toml` - `tf_cloud_key`
+- Copy the token string to `credentials.toml` - `tf_cloud_token`
 
 #### Docker Hub
 
@@ -68,7 +68,7 @@ We will use Docker Hub as a repository to store our app images.
 - Create an account with Docker Hub - https://hub.docker.com/ 
 - Go to "Account Settings" (top right), and select Security
 - Create New Access Token
-- copy your username to `credentials.toml` - `docker_username`
+- copy your username to `credentials.toml` - `docker_login`
 - copy your token string to `credentials.toml` - `docker_token`
 
 #### Snyk
