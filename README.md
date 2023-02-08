@@ -127,7 +127,7 @@ The project is a simple web application, that is packaged in a Docker container,
 
 Most of our work will be in `./circleci/config.yml` - the CircleCI configuration file. This is where we will be describing our CI/CD pipelines.
 
-This workshop is written in chapters, so you can jump between them by running scripts in `sripts/` dir, if you get lost and want to catch up with something.
+This workshop is written in chapters, so you can jump between them by running scripts in `scripts/` dir, if you get lost and want to catch up with something.
 To begin, prepare your environment for the initial state by running the start script: `./scripts/do_1_start.sh`
 
 Go to app.circleci.com, and if you haven't yet, log in with your GitHub account (or create a new one).
@@ -252,7 +252,7 @@ You should have all the required accounts for third party services already, and 
 Make sure that you have all the required service variables set in `credentials.toml`, and then run the script:
 
 ```bash
-python3 scripts/prepare_contexts.py
+python3 scripts/util/provisioning/provision_workshop.py
 ```
 
 Most of the things you do in CircleCI web interface can also be done with the API. You can inspect the newly created context and secrets by going to your organization settings. Now we can create a new job to build and deploy a Docker image.
