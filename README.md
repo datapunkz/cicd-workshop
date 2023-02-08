@@ -455,7 +455,7 @@ create_do_k8s_cluster:
           arch: "amd64"
           os: "linux"
       - terraform/init:
-          path: ./terraform/do_create_k8s
+          path: ./terraform/digital_ocean/do_create_k8s
       - run:
           name: Create K8s Cluster on DigitalOcean
           command: |
@@ -463,7 +463,7 @@ create_do_k8s_cluster:
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITAL_OCEAN_TOKEN | jq -r '.[0] | .slug')"
 
-            terraform -chdir=./terraform/do_create_k8s apply \
+            terraform -chdir=./terraform/digital_ocean/do_create_k8s apply \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
               -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
