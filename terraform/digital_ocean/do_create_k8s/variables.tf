@@ -18,7 +18,7 @@ variable "cluster_name" {
   }  
 }
 
-variable "do_k8s_slug_ver" {
-  type = string
-  description = "DO Kubernetes version slug. Get it using this: doctl kubernetes options versions"
-}
+#variable "do_k8s_slug_ver" {
+#  type = string
+#  description = "DO Kubernetes version slug. Get it using this: doctl kubernetes options versions"
+#}

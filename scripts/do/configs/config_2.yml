@@ -40,7 +40,7 @@ jobs:
         - docker/push:
             image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
             tag: 0.1.<< pipeline.number >>
-  
+
   dependency_vulnerability_scan:
     docker:
       - image: cimg/node:16.16.0
@@ -50,7 +50,7 @@ jobs:
       - snyk/scan:
           fail-on-issues: false
           monitor-on-build: false
-      
+
 workflows:
   test_scan_deploy:
     jobs:
