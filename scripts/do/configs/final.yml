@@ -237,6 +237,7 @@ workflows:
         - build_docker_image:
             context:
               - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_SNYK
         - create_do_k8s_cluster:
             requires:
               - build_docker_image

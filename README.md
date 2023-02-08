@@ -113,7 +113,7 @@ The project is a simple web application, that is packaged in a Docker container,
 - Building and pushing a Docker image
 - Scanning for vulnerabilities
 
-#### Chapter 2 - Infrastructure provisioning and deployments
+#### Chapter 2 - Infrastructure provisioning and deployments with Terraform
 
 - Cloud native principles
 - Introduction to Terraform
@@ -121,11 +121,7 @@ The project is a simple web application, that is packaged in a Docker container,
 - Destroying the provisioned infrastructure
 - Deployment to the new cluster with Terraform
 - Running a smoke test on the deployed app
-
-#### Chapter 3 - Advanced CI/CD concepts
- 
 - Manual approval step before destroying infrastructure
-- Filtering pipelines on branches and tags
 
 ## Chapter 1 - Basics of CI/CD
 
@@ -402,9 +398,6 @@ workflows:
 🎉 Congratulations, you've completed the first part of the exercise!
 
 ## Chapter 2 - Cloud Native Deployments
-
-
-### Cloud Native deployments
 
 We often use CI/CD pipelines to create our infrastructure, not just run our applications. In the following steps we will be doing just that.
 
