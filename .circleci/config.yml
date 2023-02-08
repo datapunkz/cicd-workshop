@@ -158,7 +158,7 @@ jobs:
             source /tmp/do_k8s/dok8s-endpoint
             ./test/smoke_test $ENDPOINT
 
-destroy_k8s_cluster:
+  destroy_k8s_cluster:
     docker:
       - image: cimg/base:stable
     steps:
