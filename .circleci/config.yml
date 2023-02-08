@@ -95,8 +95,7 @@ jobs:
             # Execute k8s creation
             terraform -chdir=terraform/digital_ocean/do_create_k8s apply -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
-              -var cluster_name=$CLUSTER_NAME \
-              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
+              -var cluster_name=$CLUSTER_NAME
   
   deploy_to_k8s:
     docker:
@@ -204,8 +203,7 @@ jobs:
 
             terraform -chdir=./terraform/digital_ocean/do_create_k8s apply -destroy -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
-              -var cluster_name=$CLUSTER_NAME \
-              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
+              -var cluster_name=$CLUSTER_NAME
 
   destroy_terraform_cloud:
     docker:
