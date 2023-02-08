@@ -571,51 +571,57 @@ destroy_k8s_cluster:
       - image: cimg/base:stable
     steps:
       - checkout
-      - install_doctl:
-          version: "1.78.0"
+      - install_doctl
       - run:
           name: Create .terraformrc file locally
-          command: echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_KEY\"}" > $HOME/.terraformrc && cat $HOME/.terraformrc
+          command: |
+            # Create TF Cli config file
+            echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc && cat $HOME/.terraformrc
+            # Create backend file for terraform init with unique TF Cloud org for K8s cluster
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}\"}" > ./terraform/digital_ocean/do_create_k8s/remote_backend_config
+            # Create backend file for terraform init with unique TF Cloud org K8s App Deploy
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config                        
       - terraform/install:
           terraform_version: "1.2.0"
           arch: "amd64"
           os: "linux"
-      - terraform/init:
-          path: ./terraform/do_k8s_deploy_app/
       - run:
           name: Destroy App Deployment
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
             export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"          
             doctl auth init -t $DIGITAL_OCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+            
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
+              -backend-config=remote_backend_config
 
-            terraform -chdir=./terraform/do_k8s_deploy_app/ apply -destroy \
+            terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app/ apply -destroy -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
-              -var docker_image=$DOCKER_IMAGE \
-              -auto-approve
-
-      - terraform/init:
-          path: ./terraform/do_create_k8s
+              -var docker_image=$DOCKER_IMAGE
       - run:
           name: Destroy K8s Cluster
           command: |
-            export CLUSTER_NAME=${CIRCLE_PROJECT_REPONAME}
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export DO_K8S_SLUG_VER="$(doctl kubernetes options versions \
               -o json -t $DIGITAL_OCEAN_TOKEN | jq -r '.[0] | .slug')"
 
-            terraform -chdir=./terraform/do_create_k8s apply -destroy \
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_create_k8s init \
+              -backend-config=remote_backend_config
+
+            terraform -chdir=./terraform/digital_ocean/do_create_k8s apply -destroy -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
-              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER \
-              -auto-approve
+              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
 ```
 
 This runs two Terraform steps - with the, running `apply -destroy` which basically undoes them. First the deployment, and then the underlying infrastructure.
 
-- Now add the destroy job to the workflow, alongside a new `approve_destroy` job:
+- Now add the destroy job to the workflow.
 
 ```yaml
 workflows:
@@ -624,33 +630,36 @@ workflows:
         - build_and_test
         - dependency_vulnerability_scan:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_SNYK
         - build_docker_image:
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
         - create_do_k8s_cluster:
+            requires:
+              - build_docker_image
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
         - deploy_to_k8s:
             requires:
-              - dependency_vulnerability_scan
-              - build_docker_image
-              - build_and_test
               - create_do_k8s_cluster
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
         - smoketest_k8s_deployment:
             requires:
               - deploy_to_k8s
-        - approve_destroy:
-            type: approval
-            requires:
-              - smoketest_k8s_deployment
         - destroy_k8s_cluster:
             requires:
-              - approve_destroy
+              - smoketest_k8s_deployment
             context:
-              - cicd-workshop
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
+```
+
+Finally, add a special `approve_destroy` job to the workflow before `destroy_k8s_cluster`:
+
 ```
 
 The `approve_destroy` had a special type set - `approval` which means we don't have to define it and it will give us the option to manually confirm we want to continue executing the workflow.
