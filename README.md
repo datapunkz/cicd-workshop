@@ -660,274 +660,46 @@ workflows:
 
 Finally, add a special `approve_destroy` job to the workflow before `destroy_k8s_cluster`:
 
+```yaml
+workflows:
+  test_scan_deploy:
+      jobs:
+        - build_and_test
+        - dependency_vulnerability_scan:
+            context:
+              - CICD_WORKSHOP_SNYK
+        - build_docker_image:
+            context:
+              - CICD_WORKSHOP_DOCKER
+        - create_do_k8s_cluster:
+            requires:
+              - build_docker_image
+            context:
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
+        - deploy_to_k8s:
+            requires:
+              - create_do_k8s_cluster
+            context:
+              - CICD_WORKSHOP_DOCKER
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
+        - smoketest_k8s_deployment:
+            requires:
+              - deploy_to_k8s
+        - approve_destroy:
+            type: approval
+            requires:
+              - smoketest_k8s_deployment
+        - destroy_k8s_cluster:
+            requires:
+              - approve_destroy
+            context:
+              - CICD_WORKSHOP_DIGITAL_OCEAN
+              - CICD_WORKSHOP_TERRAFORM_CLOUD
+
 ```
 
 The `approve_destroy` had a special type set - `approval` which means we don't have to define it and it will give us the option to manually confirm we want to continue executing the workflow.
 
-🎉 Congratulations! You have reached to the end of chapter 2 with a fully fledged Kubernetes provisioning and deployment in a CI/CD pipeline!
-
-
-## Chapter 3 - Advanced CI/CD 
-
-Let's pretend a few months have passed, you have been working on your application for a while and noticed the tests now run a lot longer than they used to! In this chapter we will be focusing on improving the pipeline itself.
-
-To get to the starting point, run:
-
-```bash
-./scripts/do_3.sh 
-```
-
-This will copy over a bunch of long running tests to simulate your application growing. Commit and see that tests now run for around 5 minutes, much longer than before.
-
-### Choosing what gets run by filtering branches
-
-We sometimes don't want to run the entire pipeline on every commit - maybe we only want to conduct the deployment when merging into the `main` branch, but not on feature branches. Let's do that now.
-
-Add a `filters` section to your cluster creation step:
-
-```yaml
-workflows:
-  run-tests:
-    jobs:
-      ...
-      - create_do_k8s_cluster:
-          requires:
-            - dependency_vulnerability_scan
-            - build_docker_image
-            - build_and_test
-          context:
-            - cicd-workshop
-          filters:
-            branches:
-              only: main
-      ...
-```
-
-While you are on a non `main` branch, you will always skip the infrastructure provisioning and deployment jobs. This will have the extra benefit of making your build times much shorter during this workshop :) 
-
-### Employing parallelism - splitting long running tests
-
-- To make our tests run faster we can try several things. My favourite is employing parallelism and run them across multiple parallel jobs. First introduce the parallelism value in `build_and_test` job:
-
-```yaml
-jobs:
-  build_and_test:
-    docker:
-      - image: cimg/node:16.16.0
-    parallelism: 4
-    steps:
-      ...
-
-```
-
-This tells CircleCI to spin up 4 parallel jobs. Now we need to change the run script to only run a subset of all the tests in each job, and then collate the results:
-
-```yaml
-jobs:
-  build_and_test:
-    docker:
-      - image: cimg/node:16.16.0
-    parallelism: 4
-    steps:
-      - checkout
-      - node/install-packages
-      - run:
-          name: Run tests
-          command: |
-            echo $(circleci tests glob "test/**/*.test.js")
-            circleci tests glob "test/**/*.test.js" | circleci tests split |
-            xargs npm run test-ci
-      - run:
-          name: Copy tests results for storing
-          command: |
-            mkdir test-results
-            cp test-results.xml test-results/
-          when: always
-      - run:
-          name: Process test report
-          command: |
-            # Convert absolute paths to relative to support splitting tests by timing
-            if [ -e test-results.xml ]; then
-              sed -i "s|`pwd`/||g" test-results.xml
-            fi
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-
-```
-
-Commit and run the tests again and you will see them run in much less time!
-
-### Employing parallelism - running tests in a matrix
-
-We often want to test the same code across different variants of the application. We can employ matrix with CircleCI for that.
-
-- Create a new job parameter for `build_and_test` job, and use its value in the selected image:
-
-```yaml
-jobs:
-  build_and_test:
-    parameters:
-      node_version:
-        type: string
-        default: 16.16.0
-    docker:
-      - image: cimg/node:<< parameters.node_version >>
-    steps:
-      - checkout
-```
-
-- Pass matrix of versions as parameters for the job in the workflow definition:
-
-```yaml
-workflows:
-  run-tests:
-    jobs:
-      - build_and_test:
-          matrix:
-            parameters:
-              node_version: ["16.16.0", "14.19.0", "17.6.0" ]
-      - dependency_vulnerability_scan
-      ...
-```
-
-### Run a nightly scheduled pipeline
-
-
-- In `Project Settings` choose the `Triggers` tab and add a new trigger. Set it to run each day at 0:00 UTC, 1 per hour, off `main` branch. Add pipeline parameter `scheduled` set to `true`.
-
-- Create a new boolean pipeline parameter in the config - `scheduled` which defaults to false:
-
-```yaml
-parameters:
-  scheduled:
-    type: boolean
-    default: false
-```
-
-- Create a new workflow called `nightly_build` that only runs when `scheduled` is true:
-
-```yaml
-workflows:
-  ...
-  nightly-build:
-    when: << pipeline.parameters.scheduled >>
-    jobs:
-      - build_and_test:
-          matrix:
-            parameters:
-              node_version: ["16.16.0", "14.19.0", "17.6.0" ]
-      - dependency_vulnerability_scan
-      - build_docker_image:
-            context:
-              - cicd-workshop
-```
-
-- Add the `when/not` rule to the `run-tests` workflow:
-
-```yaml
-workflows:
-  test_scan_deploy:
-    when:
-      not: << pipeline.parameters.scheduled >>
-    jobs:
-      - build_and_test:
-      ...
-```
-
-This effectively lets us to route the workflow execution based on the pipeline parameter which is set.
-
-🎉 Contratulations, you have completed the chapter, and optimised your CI/CD pipeline further!
-
-## Chapter 4 - Dynamic Config
-
-You can reset the state for this by running `.scripts/do_4.sh`
-
-So far our config has been pretty straightforward. Trigger on commit or schedule would run our pipeline. But sometimes we want more flexibility, based on some external factors.
-
-Dynamic config lets you change what your pipeline does while it's already running, based on git history, changes, or external factors.
-
-- Toggle dynamic config in project settings - Advanced
-- Copy your existing `config.yml` to `.circleci/continue-config.yml`:
-
-```bash
-cp .circleci/config.yml .circleci/continue-config.yml
-```
-
-- Add `setup: true` stanza to your `config.yml`: 
-
-```yaml
-version: 2.1
-
-setup: true
-...
-```
-
-- Add the `path-filtering` orb (and remove others) in `config.yml`
-
-```yaml
-orbs: 
-  path-filtering: circleci/path-filtering@0.1.1
-  continuation: circleci/continuation@0.2.0
-```
-
-- Remove all jobs and workflows in `config.yml` and replace with the following:
-
-```yaml
-jobs:
-  filter-paths:
-    docker:
-      - image: cimg/base:stable
-    steps:   
-      - checkout
-      - path-filtering/set-parameters:
-          base-revision: main
-          mapping: |
-            scripts/.*     skip-run  true
-          output-path: /tmp/pipeline-parameters.json
-      - continuation/continue:
-          configuration_path: .circleci/continue-config.yml
-          parameters: /tmp/pipeline-parameters.json 
-workflows:
-  choose-config:
-    jobs:
-      - filter-paths
-```
-
-Add the pipeline parameter for our scheduled pipeline
-
-```yaml
-parameters:
-  scheduled:
-    type: boolean
-    default: false
-```
-
-- In `continue-config.yml` add the the `skip-run` pipeline parameter:
-
-```yaml
-parameters:
-  skip-run:
-    type: boolean
-    default: false
-  scheduled:
-    type: boolean
-    default: false
-```
-
-- Add the `skip-run` parameters to `when not` condition in the `test_scan_deploy` workflow:
-
-```yaml
-workflows:
-  run-tests:
-    when:
-      and: 
-        - not: << pipeline.parameters.scheduled >>
-        - not: << pipeline.parameters.skip-run >>
-    jobs:
-      - build_and_test:
-      ...
-```
-
-That's it - you have completed our workshop!
+🎉 Congratulations! You have completed the workshop!
