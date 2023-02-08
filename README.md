@@ -478,7 +478,56 @@ create_do_k8s_cluster:
 
 ```
 
-Add the new job to the workflow. Add `requires` statements to only start deployment when all prior steps have completed
+Add a job deploy_to_k8s which will perform the deployment:
+
+```yaml
+deploy_to_k8s:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_doctl
+      - run:
+          name: Create .terraformrc file locally
+          command: |
+            echo "credentials \"app.terraform.io\" {token = \"$TF_CLOUD_TOKEN\"}" > $HOME/.terraformrc
+            # Create backend file for terraform init with unique TF Cloud org
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config
+      - terraform/install:
+          terraform_version: "1.2.0"
+          arch: "amd64"
+          os: "linux"
+      - run:
+          name: Deploy Application to K8s on DigitalOcean
+          command: |
+            export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
+            export TAG=0.1.<< pipeline.number >>
+            export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"
+            doctl auth init -t $DIGITAL_OCEAN_TOKEN
+            doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+
+            # Initialize terraform with unique org name
+            terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
+              -backend-config=remote_backend_config
+
+            # Execute apply comand 
+            terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app apply -auto-approve \
+              -var do_token=$DIGITAL_OCEAN_TOKEN \
+              -var cluster_name=$CLUSTER_NAME \
+              -var docker_image=$DOCKER_IMAGE
+
+            # Save the Load Balancer Public IP Address
+            export ENDPOINT="$(terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app output lb_public_ip)"
+            mkdir -p /tmp/do_k8s/
+            echo 'export ENDPOINT='${ENDPOINT} > /tmp/do_k8s/dok8s-endpoint
+      - persist_to_workspace:
+          root: /tmp/do_k8s/
+          paths:
+            - "*"
+
+```
+
+Add the new job to the workflow. Add `requires` statements to only start cluster  when all prior steps have completed
 
 ```yaml
 workflows:
