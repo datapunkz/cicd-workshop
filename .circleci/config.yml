@@ -1,19 +1,64 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@5.1.0
+  docker: circleci/docker@2.2.0
+  snyk: snyk/snyk@1.4.0
+
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: cimg/node:16.16.0
     steps:
       - checkout
+      - node/install-packages
       - run:
-          command: |
-            npm install
+          name: Run tests
+          command: npm run test-ci
       - run:
+          name: Copy tests results for storing
           command: |
-            npm run test
+            mkdir test-results
+            cp test-results.xml test-results/
+          when: always
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
 
+  build_docker_image:
+      docker:
+        - image: cimg/base:stable
+      steps:
+        - checkout
+        - setup_remote_docker:
+            docker_layer_caching: false
+        - docker/check
+        - docker/build:
+            image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+            tag: 0.1.<< pipeline.number >>
+        - docker/push:
+            image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+            tag: 0.1.<< pipeline.number >>
+  
+  dependency_vulnerability_scan:
+    docker:
+      - image: cimg/node:16.16.0
+    steps:
+      - checkout
+      - node/install-packages
+      - snyk/scan:
+          fail-on-issues: false
+          monitor-on-build: false
+      
 workflows:
-  build_test_deploy:
+  test_scan_deploy:
     jobs:
-      - build
+      - build_and_test
+      - dependency_vulnerability_scan:
+          context:
+            - CICD_WORKSHOP_SNYK
+      - build_docker_image:
+          context:
+            - CICD_WORKSHOP_DOCKER
+            - CICD_WORKSHOP_SNYK
