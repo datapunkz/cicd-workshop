@@ -125,7 +125,7 @@ The project is a simple web application, that is packaged in a Docker container,
 
 ## Chapter 1 - Basics of CI/CD
 
-Most of our work will be in `./circleci/config.yml` - the CircleCI configuration file. This is where we will be describing our CI/CD pipelines.
+Most of our work will be in `.circleci/config.yml` - the CircleCI configuration file. This is where we will be describing our CI/CD pipelines.
 
 This workshop is written in chapters, so you can jump between them by running scripts in `scripts/` dir, if you get lost and want to catch up with something.
 To begin, prepare your environment for the initial state by running the start script: `./scripts/do_1_start.sh`
@@ -135,7 +135,7 @@ Navigate to the `Projects` tab, and find this workshop project there - `cicd-wor
 
 We will start off with a basic continuous integration pipeline, which will run your tests each time you commit some code. Run a commit for each instruction. The first pipeline is already configured, if it's not you can run: `./scripts/do_0_start.sh` to create the environment.
 
-Now review the `.circleci/config.yaml` find the `jobs` section, and a job called `build`, and workflow called `build_test_deploy`:
+Now review the `.circleci/config.yml` find the `jobs` section, and a job called `build`, and workflow called `build_test_deploy`:
 
 ```yaml
 version: 2.1
