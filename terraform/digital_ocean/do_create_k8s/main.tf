@@ -28,11 +28,15 @@ provider "digitalocean" {
   token = var.do_token
 }
 
+# We like to live in the edge.
+data "digitalocean_kubernetes_versions" "latest" {}
+
 resource "digitalocean_kubernetes_cluster" "k8s_cluster" {
   name   = var.cluster_name
   region = var.do_data_center
-  # Grab the latest version slug from `doctl kubernetes options versions`
-  version = var.do_k8s_slug_ver
+  # HINT: If this breaks, you can use `var.do_k8s_slug_ver`, but uncomment it
+  #       on `variables.tf` file in this directory.
+  version = data.digitalocean_kubernetes_versions.latest.latest_version
 
   node_pool {
     name       = var.cluster_name

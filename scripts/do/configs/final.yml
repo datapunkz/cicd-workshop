@@ -56,7 +56,7 @@ jobs:
         - docker/push:
             image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
             tag: 0.1.<< pipeline.number >>
-  
+
   dependency_vulnerability_scan:
     docker:
       - image: cimg/node:16.16.0
@@ -95,9 +95,8 @@ jobs:
             # Execute k8s creation
             terraform -chdir=terraform/digital_ocean/do_create_k8s apply -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
-              -var cluster_name=$CLUSTER_NAME \
-              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
-  
+              -var cluster_name=$CLUSTER_NAME
+
   deploy_to_k8s:
     docker:
       - image: cimg/base:stable
@@ -127,7 +126,7 @@ jobs:
             terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
               -backend-config=remote_backend_config
 
-            # Execute apply comand 
+            # Execute apply command
             terraform -chdir=./terraform/digital_ocean/do_k8s_deploy_app apply -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
               -var cluster_name=$CLUSTER_NAME \
@@ -141,7 +140,7 @@ jobs:
           root: /tmp/do_k8s/
           paths:
             - "*"
-    
+
   smoketest_k8s_deployment:
     docker:
       - image: cimg/base:stable
@@ -169,7 +168,7 @@ jobs:
             # Create backend file for terraform init with unique TF Cloud org for K8s cluster
             echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}\"}" > ./terraform/digital_ocean/do_create_k8s/remote_backend_config
             # Create backend file for terraform init with unique TF Cloud org K8s App Deploy
-            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config                        
+            echo -en "organization = \"${TF_CLOUD_ORGANIZATION}\"\nworkspaces{name =\"${TF_CLOUD_WORKSPACE}-deployment\"}" > ./terraform/digital_ocean/do_k8s_deploy_app/remote_backend_config
       - terraform/install:
           terraform_version: "1.2.0"
           arch: "amd64"
@@ -179,10 +178,10 @@ jobs:
           command: |
             export CLUSTER_NAME=${CIRCLE_PROJECT_USERNAME}-${CIRCLE_PROJECT_REPONAME}
             export TAG=0.1.<< pipeline.number >>
-            export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"          
+            export DOCKER_IMAGE="${DOCKER_LOGIN}/${CIRCLE_PROJECT_REPONAME}:$TAG"
             doctl auth init -t $DIGITAL_OCEAN_TOKEN
             doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
-            
+
             # Initialize terraform with unique org name
             terraform -chdir=terraform/digital_ocean/do_k8s_deploy_app init \
               -backend-config=remote_backend_config
@@ -204,8 +203,7 @@ jobs:
 
             terraform -chdir=./terraform/digital_ocean/do_create_k8s apply -destroy -auto-approve \
               -var do_token=$DIGITAL_OCEAN_TOKEN \
-              -var cluster_name=$CLUSTER_NAME \
-              -var do_k8s_slug_ver=$DO_K8S_SLUG_VER
+              -var cluster_name=$CLUSTER_NAME
 
   destroy_terraform_cloud:
     docker:
